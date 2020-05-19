@@ -3,18 +3,24 @@ const functions = require('firebase-functions');
 const app = require('express')();
 
 const FBAuth = require('./util/fbAuth');
-const { getAllPosts, postOnePost } = require('./handlers/posts');
-const { signup, login, uploadImage, addUserDetails } = require('./handlers/users');
+const { getAllPosts, postOnePost, getPost } = require('./handlers/posts');
+const { signup, login, uploadImage, addUserDetails, getAuthenticatedUser } = require('./handlers/users');
 
 // Posts routes
 app.get('/posts', getAllPosts) //getting  all posts from database
 app.post("/post", FBAuth, postOnePost) //posting new post
+app.get('/post/:postId', getPost)
+// TODO Delete post
+// TODO Like post
+// TODO Unlike Post
+// TODO Comment on post
 
 // Users routes
 app.post('/signup', signup)//  Signup route
 app.post('/login', login) // Login route
 app.post('/user/image',FBAuth , uploadImage)
 app.post('/user', FBAuth, addUserDetails)
+app.get('/user', FBAuth, getAuthenticatedUser)
 
 // one of the best practices is to add api/<sth> when you're describing api
 // thats why we add the line below

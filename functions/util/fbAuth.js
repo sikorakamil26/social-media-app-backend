@@ -1,5 +1,6 @@
 const { admin, db } = require('./admin');
 
+// middleware
 module.exports = (request, response, next) => {
     let idToken;
     if(request.headers.authorization && request.headers.authorization.startsWith('Bearer ')) {

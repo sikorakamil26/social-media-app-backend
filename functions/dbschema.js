@@ -21,5 +21,37 @@ let db = {
             likeCount: 5,
             commandCount: 2
         }
+    ],
+    comments: [
+        {
+            userHandle: 'user',
+            postId: 'qioruenvoriuhqqwefq',
+            body: 'nice one mate!',
+            createdAt: '2020-05-18T17:20:56.361Z'
+        }
+    ]
+};
+
+const userDetails = {
+    //Redux data
+    credentials: {
+        userId: 'N4SKSFNWEFJIOWNENUIWBHIUYW',
+        email:'user@email.com',
+        handle: 'user',
+        createdAt: '2020-05-18T17:20:56.361Z',
+        imageUrl: 'image/qwefqwevqwervqw/qwegwqegwq',
+        bio: 'Hello my name is Kamil',
+        website: 'https://user.com',
+        location: 'London, UK'
+    },
+    likes: [
+        {
+            userHandle: 'user',
+            screamId: 'qgqwrgqwegqwwewqe'
+        }, 
+        {
+            userHandle: 'user',
+            screamId: 'qwefwev112344evew'
+        }
     ]
 }
