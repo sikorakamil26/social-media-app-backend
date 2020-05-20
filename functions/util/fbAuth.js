@@ -1,28 +1,36 @@
-const { admin, db } = require('./admin');
+const { admin, db } = require("./admin");
 
 // middleware
-module.exports = (request, response, next) => {
-    let idToken;
-    if(request.headers.authorization && request.headers.authorization.startsWith('Bearer ')) {
-        // extract token
-        idToken = request.headers.authorization.split("Bearer ")[1];
-    } else {
-        console.error("No Token found");
-        return response.status(403).json({error: 'Unauthorized'});
-    }
-    admin.auth().verifyIdToken(idToken)
-        .then(decodedToken => {
-            request.user = decodedToken;
-            return db.collection("users")
-                .where('userId', "==", request.user.uid)
-                .limit(1)
-                .get();
-        })
-        .then(data => {
-            request.user.handle = data.docs[0].data().handle;
-            return next();
-        }).catch(err => {
-            console.error('Error while veryfying token ', err);
-            return response.status(403).json(err);
-        });
-}
+module.exports = (req, res, next) => {
+  let idToken;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer ")
+  ) {
+    // extract token
+    idToken = req.headers.authorization.split("Bearer ")[1];
+  } else {
+    console.error("No Token found");
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  admin
+    .auth()
+    .verifyIdToken(idToken)
+    .then((decodedToken) => {
+      req.user = decodedToken;
+      return db
+        .collection("users")
+        .where("userId", "==", req.user.uid)
+        .limit(1)
+        .get();
+    })
+    .then((data) => {
+      req.user.handle = data.docs[0].data().handle;
+      req.user.imageUrl = data.docs[0].data().imageUrl;
+      return next();
+    })
+    .catch((err) => {
+      console.error("Error while veryfying token ", err);
+      return res.status(403).json(err);
+    });
+};
