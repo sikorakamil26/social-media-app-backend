@@ -1,7 +1,7 @@
 const { db } = require("../util/admin");
 
 exports.getAllPosts = (req, res) => {
-  db.collection("post")
+  db.collection("posts")
     .orderBy("createdAt", "desc") //ordering the res
     .get()
     .then((data) => {
@@ -29,7 +29,7 @@ exports.postOnePost = (req, res) => {
     commentCount: 0,
   };
 
-  db.collection("post")
+  db.collection("posts")
     .add(newPost)
     // eslint-disable-next-line promise/always-return
     .then((doc) => {
@@ -46,7 +46,7 @@ exports.postOnePost = (req, res) => {
 // fetch one scream
 exports.getPost = (req, res) => {
   let postData = {};
-  db.doc(`/post/${req.params.postId}`)
+  db.doc(`posts/${req.params.postId}`)
     .get()
     .then((doc) => {
       if (!doc.exists) {
@@ -81,11 +81,11 @@ exports.commentOnPost = (req, res) => {
     body: req.body.body,
     createdAt: new Date().toISOString(),
     postId: req.params.postId,
-    userhandle: req.user.handle,
+    userHandle: req.user.handle,
     userImage: req.user.imageUrl,
   };
 
-  db.doc(`/post/${req.params.postId}`)
+  db.doc(`/posts/${req.params.postId}`)
     .get()
     .then((doc) => {
       if (!doc.exists) {
@@ -113,7 +113,7 @@ exports.likePost = (req, res) => {
     .where("postId", "==", req.params.postId)
     .limit(1);
 
-  const postDocument = db.doc(`/post/${req.params.postId}`);
+  const postDocument = db.doc(`/posts/${req.params.postId}`);
 
   let postData = {};
 
@@ -161,7 +161,7 @@ exports.unlikePost = (req, res) => {
     .where("postId", "==", req.params.postId)
     .limit(1);
 
-  const postDocument = db.doc(`/post/${req.params.postId}`);
+  const postDocument = db.doc(`/posts/${req.params.postId}`);
 
   let postData = {};
 
@@ -205,7 +205,7 @@ exports.unlikePost = (req, res) => {
 };
 
 exports.deletePost = (req, res) => {
-  const document = db.doc(`/post/${req.params.postId}`);
+  const document = db.doc(`/posts/${req.params.postId}`);
   document
     .get()
     .then((doc) => {
