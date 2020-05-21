@@ -48,11 +48,15 @@ exports.createNotificationOnLike = functions
   .region("europe-west1")
   .firestore.document("likes/{id}")
   .onCreate((snapshot) => {
-    db.doc(`/posts/${snapshot.data().postId}`)
+    return db
+      .doc(`/posts/${snapshot.data().postId}`)
       .get()
       .then((doc) => {
         // eslint-disable-next-line promise/always-return
-        if (doc.exists) {
+        if (
+          doc.exists &&
+          doc.data().userHandle !== snapshot.data().userHandle
+        ) {
           return db.doc(`/notifications/${snapshot.id}`).set({
             createdAt: new Date().toISOString(),
             recipient: doc.data().userHandle,
@@ -63,13 +67,8 @@ exports.createNotificationOnLike = functions
           });
         }
       })
-      .then(() => {
-        return;
-      })
       .catch((err) => {
         console.error(err);
-        // dont need to return enything because its a db trigger not an endpoint
-        return;
       });
   });
 
@@ -78,14 +77,11 @@ exports.deleteNotificationOnUnLike = functions
   .region("europe-west1")
   .firestore.document("likes/{id}")
   .onDelete((snapshot) => {
-    db.doc(`/notifications/${snapshot.id}`)
+    return db
+      .doc(`/notifications/${snapshot.id}`)
       .delete()
-      .then(() => {
-        return;
-      })
       .catch((err) => {
         console.log(err);
-        return;
       });
   });
 
@@ -93,11 +89,15 @@ exports.createNotificationOnComment = functions
   .region("europe-west1")
   .firestore.document("comments/{id}")
   .onCreate((snapshot) => {
-    db.doc(`/posts/${snapshot.data().postId}`)
+    return db
+      .doc(`/posts/${snapshot.data().postId}`)
       .get()
       .then((doc) => {
         // eslint-disable-next-line promise/always-return
-        if (doc.exists) {
+        if (
+          doc.exists &&
+          doc.data().userHandle !== snapshot.data().userHandle
+        ) {
           return db.doc(`/notifications/${snapshot.id}`).set({
             createdAt: new Date().toISOString(),
             recipient: doc.data().userHandle,
@@ -108,12 +108,68 @@ exports.createNotificationOnComment = functions
           });
         }
       })
-      .then(() => {
-        return;
-      })
       .catch((err) => {
         console.error(err);
         // dont need to return enything because its a db trigger not an endpoint
-        return;
+      });
+  });
+
+// When somebody changes his/her profile image, we want the image to update in all the posts that this person created!
+exports.onUserImageChange = functions
+  .region("europe-west1")
+  .firestore.document("/users/{userId}")
+  .onUpdate((change) => {
+    // the if we use change -> we can check what before and after
+    if (change.before.data().imageUrl !== change.after.data().imageUrl) {
+      console.log("Image has changed");
+      let batch = db.batch();
+      return db
+        .collection("posts")
+        .where("userHandle", "==", change.before.data().handle)
+        .get()
+        .then((data) => {
+          data.forEach((doc) => {
+            const post = db.doc(`/posts/${doc.id}`);
+            batch.update(post, { userImage: change.after.data().imageUrl });
+          });
+          return batch.commit();
+        });
+    } else return true;
+  });
+
+// On delete post, delete all likes, comments and notifications related to it
+exports.onPostDelete = functions
+  .region("europe-west1")
+  .firestore.document("/posts/{postId}")
+  .onDelete((snapshot, context) => {
+    const postId = context.params.postId;
+    const batch = db.batch();
+    return db
+      .collection("comments")
+      .where("postId", "==", postId)
+      .get()
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/comments/${doc.id}`));
+        });
+        return db.collection("likes").where("postId", "==", postId).get();
+      })
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/likes/${doc.id}`));
+        });
+        return db
+          .collection("notifications")
+          .where("postId", "==", postId)
+          .get();
+      })
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/notifications/${doc.id}`));
+        });
+        return batch.commit();
+      })
+      .catch((err) => {
+        console.error(err);
       });
   });
