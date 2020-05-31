@@ -68,6 +68,7 @@ exports.signup = (req, res) => {
     });
 };
 
+// Log user in
 exports.login = (req, res) => {
   const user = {
     email: req.body.email,
@@ -75,9 +76,9 @@ exports.login = (req, res) => {
   };
 
   const { valid, errors } = validateLoginData(user);
+
   if (!valid) return res.status(400).json(errors);
 
-  // login
   firebase
     .auth()
     .signInWithEmailAndPassword(user.email, user.password)
